@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client">
+   <AnchorPane prefHeight="365.0" prefWidth="443.0">
+      <Button fx:id="connect" layoutX="303.0" layoutY="403.0" prefHeight="25.0" prefWidth="150.0" mnemonicParsing="false" onAction="#sendCommand" text="Connect" />
+      <Button fx:id="delete" layoutX="303.0" layoutY="436.0" prefHeight="25.0" prefWidth="150.0" mnemonicParsing="false" onAction="#sendCommand" text="Delete" />
+      <Button fx:id="copy" layoutX="450.0" layoutY="403.0" prefHeight="25.0" prefWidth="150.0" mnemonicParsing="false" onAction="#sendCommand" text="Copy" />
+      <Button fx:id="mkDir" layoutX="450.0" layoutY="436.0" prefHeight="25.0" prefWidth="150.0" mnemonicParsing="false" onAction="#sendCommand" text="MkDir" />
+      <ListView fx:id="listViewL" layoutX="0.0" layoutY="0.0" prefHeight="400.0" prefWidth="300.0" />
+      <ListView fx:id="listViewR" layoutX="303.0" layoutY="0.0" prefHeight="400.0" prefWidth="300.0" />
+      <TextField fx:id="serverName" layoutX="0.0" layoutY="403.0" prefHeight="25.0" prefWidth="300.0" text="localhost"/>
+      <TextField fx:id="mkDirName" layoutX="0.0" layoutY="436.0" prefHeight="25.0" prefWidth="300.0" text="C:\"/>
+   </AnchorPane>
+   <columnConstraints>
+      <ColumnConstraints />
+   </columnConstraints>
+   <rowConstraints>
+      <RowConstraints />
+   </rowConstraints>
+</GridPane>
