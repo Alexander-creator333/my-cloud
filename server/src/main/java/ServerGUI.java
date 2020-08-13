@@ -1,4 +1,8 @@
+import javafx.scene.control.ListView;
+
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,23 +13,33 @@ public class ServerGUI extends JFrame {
     private JLabel serverStatus;
     private JButton serverStartStop;
     private JTextField serverPort;
+    private ListView<String> listLogView;
+
     Server  serverServer;
 
     public ServerGUI(){
         super("ServerGUI");
 
+//        tf1.setFont(bigFont);
         serverStatus = new JLabel("Server stoped...");
+        Font bigFont = serverStatus.getFont().deriveFont(Font.PLAIN, 30f);
+        serverStatus.setFont(bigFont);
         serverStartStop = new JButton("Start server");
-        serverPort = new JTextField("8189");
+        serverStartStop.setFont(bigFont);
+        serverPort = new JTextField("31337");
+        serverPort.setFont(bigFont);
+        //listLogView = new ListView<String>();
 
         JPanel topPanel = new JPanel(new FlowLayout());
-        topPanel.add(serverStatus, BorderLayout.NORTH);
+        topPanel.add(serverStatus, BorderLayout.CENTER);
+        JPanel centerPanel = new JPanel(new FlowLayout());
+        centerPanel.add(serverPort, BorderLayout.WEST);
+        centerPanel.add(serverStartStop, BorderLayout.EAST);
         JPanel bottomPanel = new JPanel(new FlowLayout());
-        bottomPanel.add(serverPort, BorderLayout.NORTH);
-        bottomPanel.add(serverStartStop, BorderLayout.SOUTH);
+       // bottomPanel.add(<String>listLogView, BorderLayout.SOUTH);
 
         add(topPanel, BorderLayout.NORTH);
-        add(bottomPanel, BorderLayout.SOUTH);
+        add(centerPanel, BorderLayout.CENTER);
 
         initListeners();
         serverServer = new Server(8181, "C:\\");

@@ -32,6 +32,7 @@ public class Client implements Initializable {
     private DataInputStream is;
     private DataOutputStream os;
     private boolean connectStatus = false;
+    private boolean leftORrightPanel = false;
 
     public void sendCommand(ActionEvent actionEvent) {
         System.out.println(serverName.getText() );
@@ -44,7 +45,7 @@ public class Client implements Initializable {
                 os.flush();
                 String response;
                 listViewL.getItems().clear();
-                listViewL.getItems().add(".. : UP-TO-DIR");
+                listViewL.getItems().add(".. : [DIR]");
                 do {
                     response = is.readUTF();
                     if(response.equals("./list-end")) break;
@@ -63,14 +64,19 @@ public class Client implements Initializable {
         clientFileList = new ArrayList<>();
         File dir = new File(clientPath);
         listViewR.getItems().clear();
-        listViewR.getItems().add(".. : UP-TO-DIR");
+        listViewR.getItems().add(".. : [DIR]");
         if (!dir.exists()) {
             //throw new RuntimeException("directory resource not exists on client");
             listViewR.getItems().add("ERROR! So sory...");
         }
         for (File file : Objects.requireNonNull(dir.listFiles())) {
             clientFileList.add(file);
-            this.listViewR.getItems().add(file.getName() + " : " + file.length());
+            if(file.isDirectory())
+            {
+                this.listViewR.getItems().add(file.getName() + " : " + "[DIR]");
+            } else {
+                this.listViewR.getItems().add(file.getName() + " : " + file.length());
+            }
         }
     }
 
@@ -80,44 +86,53 @@ public class Client implements Initializable {
         try{
             ListRRefresh();
             listViewL.setOnMouseClicked(a -> {
+                leftORrightPanel = false;
+                System.out.println("<");
+
                 if (a.getClickCount() == 2) {
                     String fileName = listViewL.getSelectionModel().getSelectedItem();
                     String[] subStr;
                     subStr = fileName.split(" : ");
                     fileName = subStr[0];
-                    try{
-                        os.writeUTF("./chdir");
-                        os.writeUTF(fileName);
-                        os.flush();
-                        is.readUTF();
-                        ListLRefresh();
-                    } catch (IOException ignr) {}
+                    if(subStr[1].equals("[DIR]")) {
+                        try {
+                            os.writeUTF("./chdir");
+                            os.writeUTF(fileName);
+                            os.flush();
+                            is.readUTF();
+                            ListLRefresh();
+                        } catch (IOException ignr) {
+                        }
+                    }
                 }
             });
             listViewR.setOnMouseClicked(a -> {
+                leftORrightPanel = true;
+                System.out.println(">");
                 if (a.getClickCount() == 2) {
                     String fileName = listViewR.getSelectionModel().getSelectedItem();
                     String[] subStr;
                     subStr = fileName.split(" : ");
                     fileName = subStr[0];
-                    if(fileName.equals("..")){
-                        int ipos=0, inum=0;
-                        for (int i = 0; i < clientPath.length(); i++) {
-                            if(clientPath.toCharArray()[i] == '\\')
-                            {
-                                ipos=i;
-                                inum++;
+                    if(subStr[1].equals("[DIR]")) {
+                        if (fileName.equals("..")) {
+                            int ipos = 0, inum = 0;
+                            for (int i = 0; i < clientPath.length(); i++) {
+                                if (clientPath.toCharArray()[i] == '\\') {
+                                    ipos = i;
+                                    inum++;
+                                }
                             }
-                        }
-                        if(inum>1) {
-                            clientPath = clientPath.substring(0, ipos);
-                        } else if (inum==1){
-                            clientPath = clientPath.substring(0, ipos);
-                            clientPath += "\\";
-                        }
+                            if (inum > 1) {
+                                clientPath = clientPath.substring(0, ipos);
+                            } else if (inum == 1) {
+                                clientPath = clientPath.substring(0, ipos);
+                                clientPath += "\\";
+                            }
 
-                    } else {
-                        clientPath = clientPath + "\\" + fileName;
+                        } else {
+                            clientPath = clientPath + "\\" + fileName;
+                        }
                     }
                     try{
                         ListRRefresh();
@@ -128,51 +143,158 @@ public class Client implements Initializable {
             mkDir.setDisable(true);
             delete.setDisable(true);
             copy.setOnAction(a -> {
-                if(connectStatus){
-                    try {
-                        os.writeUTF("./copy");
-                        os.flush();
-                        String response = is.readUTF();
-                        System.out.println(response);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                if(leftORrightPanel == true){
+                    String fileName = listViewR.getSelectionModel().getSelectedItem();
+                    String[] subStr;
+                    subStr = fileName.split(" : ");
+                    fileName = subStr[0];
+                    System.out.println("222 "+fileName.toString());
+                    if(!subStr[1].equals("[DIR]")) {
+                        File currentFile = findFileByName(fileName);
+                        if (currentFile != null) {
+                            try {
+                                os.writeUTF("./upload");
+                                os.writeUTF(fileName);
+                                os.writeLong(currentFile.length());
+                                FileInputStream fis = new FileInputStream(currentFile);
+                                byte[] buffer = new byte[1024];
+                                while (fis.available() > 0) {
+                                    int bytesRead = fis.read(buffer);
+                                    os.write(buffer, 0, bytesRead);
+                                }
+                                os.flush();
+                                String response = is.readUTF();
+                                System.out.println(response);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            System.out.println("222");
+                        }
+//                        try {
+                            System.out.println("223");
+//                            ListLRefresh();
+                            System.out.println("224");
+//                        } catch (IOException tmp) {}
+                        System.out.println("225");
                     }
+                    System.out.println("225.5");
                 } else {
-                    copy.setDisable(true);
+                    if (connectStatus) {
+                        byte[] buffer = new byte[1024];
+                        String fileName = listViewL.getSelectionModel().getSelectedItem();
+                        String[] subStr = fileName.split(" : ");
+                        fileName = subStr[0];
+                        if (!subStr[1].equals("[DIR]")) {
+                            try {
+                                os.writeUTF("./download");
+                                os.writeUTF(fileName.toString());
+                                System.out.println("333"+fileName.toString());
+                                fileName = is.readUTF();
+                                if (fileName.equals("./upload")) {
+                                    System.out.println("YES");
+                                } else {
+                                    System.out.println("NO");
+                                }
+                                fileName = is.readUTF();
+                                System.out.println("334"+fileName.toString());
+                            } catch (IOException ignored) {
+                            }
+                            long fileLength = 0;
+                            try {
+                                fileLength = is.readLong();
+                            } catch (IOException tmp) {
+                            }
+                            File file = new File(clientPath + "\\" + fileName);
+                            if (!file.exists()) {
+                                try {
+                                    file.createNewFile();
+                                } catch (IOException tmp) {
+                                }
+                            System.out.println("335");
+                            }
+                            System.out.println("336");
+                            try {
+                                FileOutputStream fos = new FileOutputStream(file);
+                                for (long i = 0; i < (fileLength / 1024 == 0 ? 1 : fileLength / 1024); i++) {
+                                    int bytesRead = is.read(buffer);
+                                    fos.write(buffer, 0, bytesRead);
+                                }
+                                System.out.println("337");
+                            } catch (IOException tmp) {}
+                            try {
+                                os.writeUTF("./upload-OK");
+                                os.flush();
+                            } catch (IOException ignored) {
+                            }
+                            try {
+                                ListRRefresh();
+                            } catch (IOException tmp) {
+                            }
+                            System.out.println("Upload OK333");
+                        }
+                    } else {
+                        copy.setDisable(true);
+                    }
                 }
+                System.out.println("226");
             });
             mkDir.setOnAction(a -> {
-                if(connectStatus){
+                if(leftORrightPanel == true){
+                    new File(clientPath.toString()+"\\"+mkDirName.getText()).mkdirs();
                     try {
-                        os.writeUTF("./mkDir");
-                        os.flush();
-                        String response = is.readUTF();
-                        System.out.println(response);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                        ListRRefresh();
+                    } catch (IOException tmp) {}
                 } else {
-                    mkDir.setDisable(true);
+                    if (connectStatus) {
+                        try {
+                            os.writeUTF("./mkDir");
+                            os.writeUTF(mkDirName.getText());
+                            os.flush();
+                            String response = is.readUTF();
+                            System.out.println(response.toString());
+                            ListLRefresh();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    } else {
+                        mkDir.setDisable(true);
+                    }
                 }
             });
             delete.setOnAction(a -> {
-                if(connectStatus){
+                if(leftORrightPanel == true){
+                    String fileName = listViewR.getSelectionModel().getSelectedItem();
+                    String[] subStr;
+                    subStr = fileName.split(" : ");
+                    new File(clientPath.toString()+"\\"+subStr[0].toString()).delete();
                     try {
-                        os.writeUTF("./delete");
-                        os.flush();
-                        String response = is.readUTF();
-                        System.out.println(response);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                        ListRRefresh();
+                    } catch (IOException tmp) {}
                 } else {
-                    delete.setDisable(true);
+                   if (connectStatus) {
+                       try {
+                           os.writeUTF("./delete");
+                           String fileName = listViewL.getSelectionModel().getSelectedItem();
+                           String[] subStr;
+                           subStr = fileName.split(" : ");
+                           os.writeUTF(subStr[0].toString());
+                           os.flush();
+                           String response = is.readUTF();
+                           System.out.println(response.toString());
+                           ListLRefresh();
+                       } catch (Exception e) {
+                           e.printStackTrace();
+                       }
+                   } else {
+                       delete.setDisable(true);
+                   }
                 }
             });
             connect.setOnAction(a -> {
                 if(!connectStatus){
                     try {
-                        socket = new Socket(serverName.getText(), 8189);//порт
+                        socket = new Socket(serverName.getText(), 31337);//порт
                         is = new DataInputStream(socket.getInputStream());
                         os = new DataOutputStream(socket.getOutputStream());
                         Thread.sleep(1000);
