@@ -163,6 +163,7 @@ public class Client implements Initializable {
                                     os.write(buffer, 0, bytesRead);
                                 }
                                 os.flush();
+                                Thread.sleep(2000);
                                 String response = is.readUTF();
                                 System.out.println(response);
                             } catch (Exception e) {
@@ -220,11 +221,16 @@ public class Client implements Initializable {
                                     fos.write(buffer, 0, bytesRead);
                                 }
                                 System.out.println("337");
-                            } catch (IOException tmp) {}
+                                Thread.sleep(1000);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                             try {
                                 os.writeUTF("./upload-OK");
                                 os.flush();
-                            } catch (IOException ignored) {
+                                Thread.sleep(2000);
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
                             try {
                                 ListRRefresh();
